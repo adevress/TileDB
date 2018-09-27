@@ -192,5 +192,13 @@ std::string URI::to_string() const {
   return uri_;
 }
 
+bool URI::operator<(const URI& uri) const {
+  return to_string() < uri.to_string();
+}
+
+bool URI::operator>(const URI& uri) const {
+  return to_string() > uri.to_string();
+}
+
 }  // namespace sm
 }  // namespace tiledb

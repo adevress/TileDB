@@ -49,7 +49,7 @@ Array::Array(const URI& array_uri, StorageManager* storage_manager)
     , storage_manager_(storage_manager) {
   is_open_ = false;
   open_array_ = nullptr;
-  snapshot_ = 0;
+  timestamp_ = 0;
   last_max_buffer_sizes_subarray_ = nullptr;
 }
 
@@ -85,7 +85,7 @@ Status Array::compute_max_buffer_sizes(
         "Cannot compute max buffer sizes; Array is not open"));
 
   return storage_manager_->array_compute_max_buffer_sizes(
-      open_array_, snapshot_, subarray, attributes, max_buffer_sizes);
+      open_array_, timestamp_, subarray, attributes, max_buffer_sizes);
 }
 
 Status Array::open(
@@ -103,7 +103,7 @@ Status Array::open(
 
   // Open the array.
   RETURN_NOT_OK(storage_manager_->array_open(
-      array_uri_, query_type, encryption_key_, &open_array_, &snapshot_));
+      array_uri_, query_type, encryption_key_, &open_array_, &timestamp_));
 
   is_open_ = true;
 
@@ -126,7 +126,7 @@ Status Array::close() {
 }
 
 bool Array::is_empty() const {
-  return is_open() && open_array_->is_empty(snapshot_);
+  return is_open() && open_array_->is_empty(timestamp_);
 }
 
 bool Array::is_open() const {
@@ -138,7 +138,7 @@ std::vector<FragmentMetadata*> Array::fragment_metadata() const {
     return std::vector<FragmentMetadata*>();
 
   open_array_->mtx_lock();
-  auto metadata = open_array_->fragment_metadata(snapshot_);
+  auto metadata = open_array_->fragment_metadata(timestamp_);
   open_array_->mtx_unlock();
   return metadata;
 }
@@ -264,7 +264,7 @@ Status Array::reopen() {
   clear_last_max_buffer_sizes();
 
   return storage_manager_->array_reopen(
-      open_array_, encryption_key_, &snapshot_);
+      open_array_, encryption_key_, &timestamp_);
 }
 
 /* ********************************* */
@@ -293,7 +293,7 @@ Status Array::compute_max_buffer_sizes(const void* subarray) {
           0) {
     last_max_buffer_sizes_.clear();
     RETURN_NOT_OK(storage_manager_->array_compute_max_buffer_sizes(
-        open_array_, snapshot_, subarray, &last_max_buffer_sizes_));
+        open_array_, timestamp_, subarray, &last_max_buffer_sizes_));
   }
 
   // Update subarray
