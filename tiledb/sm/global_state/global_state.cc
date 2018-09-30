@@ -33,6 +33,7 @@
 #include "tiledb/sm/global_state/global_state.h"
 #include "tiledb/sm/global_state/openssl_state.h"
 #include "tiledb/sm/global_state/signal_handlers.h"
+#include "tiledb/sm/global_state/tbb_state.h"
 #include "tiledb/sm/global_state/watchdog.h"
 
 namespace tiledb {
@@ -55,7 +56,8 @@ Status GlobalState::initialize(Config* config) {
     if (config != nullptr) {
       config_ = *config;
     }
-    if (config_.sm_params().enable_signal_handlers_) {
+    RETURN_NOT_OK(init_tbb(config->sm_params().num_tbb_threads_));
+    if (config->sm_params().enable_signal_handlers_) {
       RETURN_NOT_OK(SignalHandlers::GetSignalHandlers().initialize());
     }
     RETURN_NOT_OK(Watchdog::GetWatchdog().initialize());
